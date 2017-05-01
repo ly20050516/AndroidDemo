@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 //        rxNormal();
 
 //        rxLazy();
-//        rxFlow();
+        rxFlow();
 //        rxMapAndSchedules();
 //        rxFlatMap();
 //        rxConnect();
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 //        rxTimer();
 //        rxTimeStamp();
 //        rxBackpressure();
-        rxBackpressure2();
+//        rxBackpressure2();
     }
 
     private void rxBackpressure2() {
@@ -312,9 +312,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void rxMapAndSchedules() {
 
-        Observable.just(Environment.getExternalStorageDirectory() + File.separator + "img-splash.jpg")
+        Observable o1 = Observable.just(Environment.getExternalStorageDirectory() + File.separator + "img-splash.jpg");
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 1 = " + o1);
 
-                .filter(new Func1<String, Boolean>() {
+        Observable o2 = o1.observeOn(Schedulers.io());
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 2 = " + o2);
+        Observable o3 = o2 .filter(new Func1<String, Boolean>() {
                     @Override
                     public Boolean call(String s) {
                         if (TextUtils.isEmpty(s)) {
@@ -323,19 +326,22 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, Thread.currentThread().getName() + " call: file path  " + s);
                         return new File(s).exists();
                     }
-                })
-                .observeOn(Schedulers.io())
-                .subscribeOn(Schedulers.newThread())
-                .map(new Func1<String, Bitmap>() {
+                });
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 3 = " + o3);
+        Observable o4 = o3.subscribeOn(Schedulers.newThread());
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 4 = " + o4);
+        Observable o5 = o4.map(new Func1<String, Bitmap>() {
                     @Override
                     public Bitmap call(String s) {
                         Log.d(TAG, Thread.currentThread().getName() + " call: img path = " + s);
                         Bitmap bitmap = BitmapFactory.decodeFile(s);
                         return bitmap;
                     }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Bitmap>() {
+                });
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 5 = " + o5);
+        Observable o6 = o5.observeOn(AndroidSchedulers.mainThread());
+        Log.d(TAG, "rxMapAndSchedules: thread name " + Thread.currentThread().getName() + ";observable 6 = " + o6);
+        o6.subscribe(new Action1<Bitmap>() {
                     @Override
                     public void call(Bitmap bitmap) {
                         Log.d(TAG, Thread.currentThread().getName() + " call: bitmap = " + bitmap);
@@ -351,21 +357,11 @@ public class MainActivity extends AppCompatActivity {
                     public Boolean call(String s) {
                         return s != null && (s.equals("on") || s.equals("off"));
                     }
-                })
-                .subscribe(new Subscriber<String>() {
+                }).subscribeOn(Schedulers.newThread())
+                .subscribe(new Action1<String>() {
                     @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted: ");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d(TAG, "onError: ");
-                    }
-
-                    @Override
-                    public void onNext(String s) {
-                        Log.d(TAG, "onNext: s = " + s);
+                    public void call(String s) {
+                        Log.d(TAG, "call: s " + s);
                     }
                 });
     }
